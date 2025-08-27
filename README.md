@@ -39,6 +39,4 @@ A simple, responsive FAQ chatbot web app powered by JavaScript and Tailwind CSS.
 - [Tailwind CSS CDN](https://cdn.tailwindcss.com)
 - [Font Awesome CDN](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css)
 
-## Screenshot
-[AI Chatbot Screenshot](Screenshot 2025-08-27 150543.png)
-[AI Chatbot Screenshot](Screenshot 2025-08-27 150557.png)
+
