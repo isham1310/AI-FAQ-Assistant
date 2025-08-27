@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered FAQ Chatbot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+        
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #818cf8;
+            --bot-bg: #f1f5f9;
+            --user-bg: #4f46e5;
+            --text-dark: #1f2937;
+            --text-light: #ffffff;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            min-height: 100vh;
+        }
+        
+        .chat-container {
+            max-height: 60vh;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+        
+        .message-bot {
+            background: var(--bot-bg);
+            border-radius: 18px 18px 18px 4px;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        .message-user {
+            background: var(--user-bg);
+            color: var(--text-light);
+            border-radius: 18px 18px 4px 18px;
+            animation: slideIn 0.3s ease-in-out;
+        }
+        
+        .typing-indicator {
+            display: flex;
+            padding: 10px;
+            gap: 4px;
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--secondary-color);
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .feedback-btn {
+            transition: all 0.2s ease;
+            opacity: 0.7;
+        }
+        
+        .feedback-btn:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        
+        .suggestion-chip {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .suggestion-chip:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                        <i class="fas fa-robot text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold">AI FAQ Assistant</h1>
+                        <p class="text-indigo-100 text-sm">Powered by Natural Language Processing</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse inline-block mr-2"></div>
+                    <span class="text-sm">Online</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Container -->
+        <div class="chat-container p-6 space-y-4 bg-gray-50" id="chatMessages">
+            <!-- Welcome Message -->
+            <div class="message-bot p-4 max-w-[80%]">
+                <div class="flex items-start space-x-2">
+                    <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-robot text-indigo-600"></i>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-indigo-600">FAQ Assistant</p>
+                        <p class="text-gray-700">Hello! I'm your AI-powered FAQ assistant. I can help you with common questions about our products and services. What would you like to know?</p>
+                        <div class="mt-3 space-y-2">
+                            <p class="text-sm text-gray-600">Try asking:</p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="suggestion-chip bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm" onclick="suggestQuestion('How do I reset my password?')">
+                                    How do I reset my password?
+                                </span>
+                                <span class="suggestion-chip bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm" onclick="suggestQuestion('What are your business hours?')">
+                                    What are your business hours?
+                                </span>
+                                <span class="suggestion-chip bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm" onclick="suggestQuestion('How can I contact support?')">
+                                    How can I contact support?
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="p-6 bg-white border-t border-gray-200">
+            <div class="flex space-x-3">
+                <input 
+                    type="text" 
+                    id="userInput" 
+                    placeholder="Type your question here..." 
+                    class="flex-1 px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    onkeypress="handleKeyPress(event)"
+                >
+                <button 
+                    onclick="sendMessage()" 
+                    class="bg-indigo-600 text-white px-6 py-3 rounded-full hover:bg-indigo-700 transition-colors flex items-center space-x-2"
+                >
+                    <span>Send</span>
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+            <p class="text-xs text-gray-500 mt-2 text-center">
+                Powered by AI • Your questions help improve our service
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // FAQ Knowledge Base
+        const faqDatabase = [
+            {
+                question: "password reset",
+                answer: "To reset your password, go to the login page and click 'Forgot Password'. Enter your email address and we'll send you a reset link. Check your spam folder if you don't see it within 5 minutes.",
+                keywords: ["password", "reset", "forgot", "change", "login", "account"]
+            },
+            {
+                question: "business hours",
+                answer: "Our customer support is available Monday through Friday from 9:00 AM to 6:00 PM EST. Weekend support is available via email with responses within 24 hours.",
+                keywords: ["hours", "time", "open", "close", "business", "support", "available"]
+            },
+            {
+                question: "contact support",
+                answer: "You can reach our support team by: 1) Email: support@company.com, 2) Phone: 1-800-123-4567, 3) Live chat on our website. Average response time is under 15 minutes during business hours.",
+                keywords: ["contact", "support", "help", "email", "phone", "call", "chat", "reach"]
+            },
+            {
+                question: "shipping information",
+                answer: "Standard shipping takes 3-5 business days. Express shipping is available for next-day delivery. International shipping takes 7-14 business days. All orders over $50 qualify for free standard shipping.",
+                keywords: ["shipping", "delivery", "ship", "arrive", "time", "free", "express"]
+            },
+            {
+                question: "return policy",
+                answer: "We offer a 30-day return policy for all unused items in original packaging. Returns are free for U.S. customers. Please contact support to initiate a return and receive a prepaid shipping label.",
+                keywords: ["return", "refund", "exchange", "policy", "send back", "money back"]
+            },
+            {
+                question: "payment methods",
+                answer: "We accept all major credit cards (Visa, MasterCard, American Express), PayPal, Apple Pay, Google Pay, and bank transfers for business accounts.",
+                keywords: ["payment", "pay", "credit card", "debit", "paypal", "apple pay", "google pay"]
+            },
+            {
+                question: "account creation",
+                answer: "Creating an account is easy! Click 'Sign Up' on our homepage, enter your email address, create a password, and verify your email. You'll have full access to order history and personalized features.",
+                keywords: ["account", "create", "sign up", "register", "new user", "profile"]
+            },
+            {
+                question: "product availability",
+                answer: "Most products are in stock and ready to ship. Out-of-stock items typically restock within 1-2 weeks. You can sign up for stock notifications on individual product pages.",
+                keywords: ["stock", "available", "in stock", "out of stock", "when available", "restock"]
+            }
+        ];
+
+        // Store for unanswered questions
+        let unansweredQuestions = JSON.parse(localStorage.getItem('unansweredQuestions')) || [];
+        let conversationHistory = [];
+
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+
+            // Add user message to chat
+            addMessage(message, 'user');
+            conversationHistory.push({ role: 'user', content: message });
+            
+            // Clear input
+            input.value = '';
+            
+            // Show typing indicator
+            showTypingIndicator();
+            
+            // Process message after a short delay to simulate thinking
+            setTimeout(() => {
+                processMessage(message);
+            }, 1500);
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function suggestQuestion(question) {
+            document.getElementById('userInput').value = question;
+            sendMessage();
+        }
+
+        function showTypingIndicator() {
+            const chatContainer = document.getElementById('chatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message-bot p-4 max-w-[80%]';
+            typingDiv.innerHTML = `
+                <div class="flex items-start space-x-2">
+                    <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-robot text-indigo-600"></i>
+                    </div>
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            `;
+            chatContainer.appendChild(typingDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            // Remove typing indicator after processing
+            setTimeout(() => {
+                if (typingDiv.parentNode) {
+                    typingDiv.parentNode.removeChild(typingDiv);
+                }
+            }, 1400);
+        }
+
+        function processMessage(message) {
+            const lowercaseMessage = message.toLowerCase();
+            let bestMatch = null;
+            let highestScore = 0;
+
+            // Simple keyword matching algorithm
+            faqDatabase.forEach(faq => {
+                let score = 0;
+                faq.keywords.forEach(keyword => {
+                    if (lowercaseMessage.includes(keyword)) {
+                        score += 1;
+                    }
+                });
+                
+                if (score > highestScore) {
+                    highestScore = score;
+                    bestMatch = faq;
+                }
+            });
+
+            if (bestMatch && highestScore >= 1) {
+                // Found a match
+                addBotMessage(bestMatch.answer, bestMatch.question);
+                conversationHistory.push({ role: 'assistant', content: bestMatch.answer });
+            } else {
+                // No good match found
+                const noAnswerMessage = "I'm not sure how to help with that yet. Our support team will review your question and add it to our knowledge base. In the meantime, you might try asking about password reset, business hours, or contact information.";
+                addBotMessage(noAnswerMessage, null, true);
+                conversationHistory.push({ role: 'assistant', content: noAnswerMessage });
+                
+                // Store unanswered question
+                unansweredQuestions.push({
+                    question: message,
+                    timestamp: new Date().toISOString(),
+                    conversation: [...conversationHistory]
+                });
+                localStorage.setItem('unansweredQuestions', JSON.stringify(unansweredQuestions));
+            }
+        }
+
+        function addMessage(message, type) {
+            const chatContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            
+            if (type === 'user') {
+                messageDiv.className = 'message-user p-4 max-w-[80%] ml-auto';
+                messageDiv.innerHTML = `
+                    <div class="flex items-center space-x-2 justify-end">
+                        <div>
+                            <p class="text-white text-sm text-right">You</p>
+                            <p class="text-white">${message}</p>
+                        </div>
+                        <div class="w-8 h-8 bg-indigo-700 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-user text-white text-sm"></i>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function addBotMessage(message, originalQuestion = null, isFallback = false) {
+            const chatContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            
+            messageDiv.className = 'message-bot p-4 max-w-[80%]';
+            messageDiv.innerHTML = `
+                <div class="flex items-start space-x-2">
+                    <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-robot text-indigo-600"></i>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-indigo-600">FAQ Assistant</p>
+                        <p class="text-gray-700">${message}</p>
+                        ${!isFallback ? `
+                        <div class="mt-3 flex space-x-2">
+                            <button onclick="handleFeedback(true, '${originalQuestion}')" class="feedback-btn bg-green-100 text-green-700 px-3 py-1 rounded text-sm">
+                                <i class="fas fa-thumbs-up mr-1"></i> Helpful
+                            </button>
+                            <button onclick="handleFeedback(false, '${originalQuestion}')" class="feedback-btn bg-red-100 text-red-700 px-3 py-1 rounded text-sm">
+                                <i class="fas fa-thumbs-down mr-1"></i> Not Helpful
+                            </button>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function handleFeedback(isHelpful, question) {
+            // Store feedback for analysis
+            const feedback = {
+                question: question,
+                isHelpful: isHelpful,
+                timestamp: new Date().toISOString()
+            };
+            
+            let feedbackHistory = JSON.parse(localStorage.getItem('feedbackHistory')) || [];
+            feedbackHistory.push(feedback);
+            localStorage.setItem('feedbackHistory', JSON.stringify(feedbackHistory));
+            
+            // Show thank you message
+            const thankYouMessage = isHelpful ? 
+                "Great! I'm glad I could help. 😊" : 
+                "Thanks for the feedback. I'll work on improving that answer.";
+            
+            addBotMessage(thankYouMessage);
+        }
+
+        // Initialize with some sample conversation if empty
+        if (conversationHistory.length === 0) {
+            conversationHistory.push({
+                role: 'assistant',
+                content: 'Hello! I\'m your AI-powered FAQ assistant. How can I help you today?'
+            });
+        }
+    </script>
+</body>
+</html>
+
