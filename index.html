@@ -139,6 +139,12 @@
                                 <span class="suggestion-chip bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm" onclick="suggestQuestion('How can I contact support?')">
                                     How can I contact support?
                                 </span>
+                                <span class="suggestion-chip bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm" onclick="suggestQuestion('What is the return policy?')">
+                                    What is the return policy?
+                                </span>
+                                <span class="suggestion-chip bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm" onclick="suggestQuestion('What are your shipping options?')">
+                                    What are your shipping options?
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -212,6 +218,11 @@
                 question: "product availability",
                 answer: "Most products are in stock and ready to ship. Out-of-stock items typically restock within 1-2 weeks. You can sign up for stock notifications on individual product pages.",
                 keywords: ["stock", "available", "in stock", "out of stock", "when available", "restock"]
+            },
+            {
+                question: "products and services",
+                answer: "We offer a wide range of innovative software solutions, including our flagship AI-powered analytics platform, a comprehensive project management suite, and custom enterprise integrations. You can explore all our offerings on our 'Products' page. Is there a specific solution you're interested in?",
+                keywords: ["product", "products", "service", "services", "sell", "offer", "provide", "what do you do", "solutions"]
             }
         ];
 
@@ -305,7 +316,7 @@
                 conversationHistory.push({ role: 'assistant', content: bestMatch.answer });
             } else {
                 // No good match found
-                const noAnswerMessage = "I'm not sure how to help with that yet. Our support team will review your question and add it to our knowledge base. In the meantime, you might try asking about password reset, business hours, or contact information.";
+                const noAnswerMessage = "I have taken your query and our team will definitely reach you in some time.";
                 addBotMessage(noAnswerMessage, null, true);
                 conversationHistory.push({ role: 'assistant', content: noAnswerMessage });
                 
@@ -403,4 +414,3 @@
     </script>
 </body>
 </html>
-
